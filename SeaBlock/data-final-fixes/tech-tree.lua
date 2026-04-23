@@ -93,4 +93,4 @@ bobmods.lib.tech.remove_prerequisite("angels-bio-wood-processing-3", "angels-sto
 bobmods.lib.tech.remove_recipe_unlock("angels-bio-wood-processing-3", "angels-bio-processor")
 
 -- Bobs Greenhouse
-bobmods.lib.tech.replace_prerequisite("bob-greenhouse", "automation-science-pack", "sct-automation-science-pack")
+--bobmods.lib.tech.replace_prerequisite("bob-greenhouse", "automation-science-pack", "automation-science-pack")
