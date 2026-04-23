@@ -1,8 +1,8 @@
 -- Rename internal item names to keep mods like FNEI searching properly
 local itemrename = {
-  ["solid-coke"] = "wood-charcoal",
-  ["filter-coal"] = "filter-charcoal",
-  ["pellet-coke"] = "pellet-charcoal",
+  ["angels-solid-coke"] = "angels-wood-charcoal",
+  ["angels-filter-coal"] = "angels-filter-charcoal",
+  ["angels-pellet-coke"] = "angels-pellet-charcoal",
 }
 
 for k, v in pairs(itemrename) do
@@ -13,87 +13,74 @@ for k, v in pairs(itemrename) do
     data.raw.item[v] = item
   end
 end
+
 local function updateline(line)
-  local nameidx = "name"
-  if line[nameidx] == nil then
-    nameidx = 1
-  end
-  local item = line[nameidx]
+  local item = line.name
   if itemrename[item] then
-    line[nameidx] = itemrename[item]
+    line.name = itemrename[item]
   end
+
 end
-local function updaterecipe(recipe)
-  for _, v in pairs(recipe.ingredients) do
+for _, recipe in pairs(data.raw.recipe) do
+  for _, v in pairs(recipe.ingredients or {}) do
     updateline(v)
   end
-  if recipe.result and itemrename[recipe.result] then
-    recipe.result = itemrename[recipe.result]
-  end
+
   for _, v in pairs(recipe.results or {}) do
     updateline(v)
   end
-end
-for _, v in pairs(data.raw.recipe) do
-  seablock.lib.iteraterecipes(v, updaterecipe)
 end
 
 -- Recipes to unconditionally remove
 local removerecipes = {}
 for _, v in ipairs({
-  "alien-artifact-blue-from-basic",
-  "alien-artifact-green-from-basic",
-  "alien-artifact-orange-from-basic",
-  "alien-artifact-purple-from-basic",
-  "alien-artifact-red-from-basic",
-  "alien-artifact-yellow-from-basic",
-  "angels-chemical-void-gas-natural-1",
-  "angels-chemical-void-liquid-condensates",
-  "angels-water-void-crystal-matrix",
-  "angels-water-void-lithia-water",
-  "angelsore1-crushed-hand",
-  "angelsore3-crushed-hand",
+  "bob-alien-artifact-blue",
+  "bob-alien-artifact-green",
+  "bob-alien-artifact-orange",
+  "bob-alien-artifact-purple",
+  "bob-alien-artifact-red",
+  "bob-alien-artifact-yellow",
+  "angels-chemical-void-angels-gas-natural-1",
+  "angels-chemical-void-angels-liquid-condensates",
+  "angels-ore1-crushed-hand",
+  "angels-ore3-crushed-hand",
   "big-burner-generator",
-  "bio-tile",
-  "bob-coal-from-wood",
+  "angels-bio-tile",
+  "bob-carbon-from-wood",
   "bob-resin-wood",
   "burner-generator",
   "burner-mining-drill",
-  "carbon-from-charcoal",
-  "coal-cracking-1",
-  "coal-cracking-2",
-  "coal-cracking-3",
-  "coal-crushed",
-  "condensates-oil-refining",
-  "condensates-refining",
+  "angels-carbon-from-charcoal",
+  "angels-coal-cracking-1",
+  "angels-coal-cracking-2",
+  "angels-coal-cracking-3",
+  "angels-coal-crushed",
+  "angels-condensates-oil-refining",
+  "angels-condensates-refining",
   "diesel-fuel",
   "electric-mining-drill",
-  "empty-crystal-matrix-barrel",
   "empty-diesel-fuel-barrel",
-  "empty-gas-natural-1-barrel",
-  "empty-liquid-condensates-barrel",
-  "empty-lithia-water-barrel",
-  "fill-crystal-matrix-barrel",
-  "fill-diesel-fuel-barrel",
-  "fill-gas-natural-1-barrel",
-  "fill-liquid-condensates-barrel",
-  "fill-lithia-water-barrel",
-  "gas-fractioning-condensates",
-  "gas-phosgene",
-  "gas-separation",
+  "empty-angels-gas-natural-1-barrel",
+  "empty-angels-liquid-condensates-barrel",
+  "empty-bob-lithia-water-barrel",
+  "diesel-fuel-barrel",
+  "angels-gas-natural-1-barrel",
+  "angels-liquid-condensates-barrel",
+  "bob-lithia-water-barrel",
+  "angels-gas-fractioning-condensates",
+  "angels-gas-separation",
   "oil-steam-boiler",
   "petroleum-generator",
-  "protection-field-goopless",
+  "protection-field-goopless", --comes from spacemod
   "pumpjack",
-  "slag-processing-7",
-  "slag-processing-8",
-  "slag-processing-9",
-  "solid-coke",
-  "solid-coke-sulfur",
-  "thermal-water-filtering-1",
-  "thermal-water-filtering-2",
-  "water-thermal-lithia",
-  "wood-charcoal",
+  "angels-slag-processing-7",
+  "angels-slag-processing-8",
+  "angels-slag-processing-9",
+  "angels-solid-coke",
+  "angels-solid-coke-sulfur",
+  "angels-thermal-water-filtering-1",
+  "angels-thermal-water-filtering-2",
+  "angels-wood-charcoal",
 }) do
   removerecipes[v] = true
 end
@@ -103,22 +90,20 @@ end
 local unobtainable = {}
 for _, v in ipairs({
   "big-burner-generator",
-  "bio-tile",
+  "angels-bio-tile",
   "burner-generator",
   "burner-mining-drill",
   "coal",
-  "coal-crushed",
+  "angels-coal-crushed",
   "diesel-fuel",
   "diesel-fuel-barrel",
   "electric-mining-drill",
-  "gas-natural-1",
-  "gas-natural-1-barrel",
-  "gas-phosgene",
-  "gas-phosgene-barrel",
-  "liquid-condensates",
-  "liquid-condensates-barrel",
-  "lithia-water",
-  "lithia-water-barrel",
+  "angels-gas-natural-1",
+  "angels-gas-natural-1-barrel",
+  "angels-liquid-condensates",
+  "angels-liquid-condensates-barrel",
+  "bob-lithia-water",
+  "bob-lithia-water-barrel",
   "oil-steam-boiler",
   "petroleum-generator",
   "pumpjack",
@@ -146,18 +131,11 @@ for k, v in pairs(data.raw.technology) do
   end
 end
 
-for k, v in pairs(recipes) do
-  local iset = {}
-  if v.normal then
-    iset = { v.normal, v.expensive }
-  else
-    iset = { v }
-  end
-  for _, recipe in ipairs(iset) do
+for k, recipe in pairs(recipes) do
     local items = {}
     if recipe.ingredients then
       for _, ingredient in pairs(recipe.ingredients) do
-        local item = ingredient[1] or ingredient.name
+        local item = ingredient.name
         if unobtainable[item] then
           items[item] = true
         end
@@ -182,7 +160,6 @@ for k, v in pairs(recipes) do
         unobtainable[r] = nil
       end
     end
-  end
 end
 
 local work = true
@@ -208,28 +185,32 @@ for k, _ in pairs(unobtainable) do
   seablock.lib.hide_item(k)
 end
 
+local keep_unobtainable_recipes = {
+  ["parameter-0"] = true,
+  ["parameter-1"] = true,
+  ["parameter-2"] = true,
+  ["parameter-3"] = true,
+  ["parameter-4"] = true,
+  ["parameter-5"] = true,
+  ["parameter-6"] = true,
+  ["parameter-7"] = true,
+  ["parameter-8"] = true,
+  ["parameter-9"] = true
+}
+
 -- Remove any recipe that uses an unobtainable ingredient
-local function keeprecipe(r)
-  local iset = {}
-  local count = 0
-  table.insert(iset, r.ingredients)
-  table.insert(iset, (r.normal or {}).ingredients)
-  table.insert(iset, (r.expensive or {}).ingredients)
-  for _, ingredients in ipairs(iset) do
-    for _, v in ipairs(ingredients) do
-      local ingredient = v[1] or v.name
-      if ingredient and unobtainable[ingredient] then
-        count = count + 1
+for recipe_name, recipe in pairs(data.raw.recipe) do
+  local keep = true
+  if recipe.ingredients then
+    for _, ingredient in pairs(recipe.ingredients) do
+      if unobtainable[ingredient.name] then
+        keep = false
         break
       end
     end
   end
-  return count < #iset
-end
-
-for k, v in pairs(data.raw.recipe) do
-  if not keeprecipe(v) then
-    removerecipes[k] = true
+  if not keep then
+    removerecipes[recipe_name] = true
   end
 end
 
@@ -252,6 +233,37 @@ end
 
 -- Clear the list of science packs that alien lab can take
 -- This prevents YAFC warning
-if data.raw.lab["lab-alien"] then
-  data.raw.lab["lab-alien"].inputs = {}
+if data.raw.lab["bob-lab-alien"] then
+  data.raw.lab["bob-lab-alien"].inputs = {}
 end
+
+-- We now need a dummy lab that can take all the science packs or else some techs can't load (even if hidden), (we could also use "bob-lab-alien" which is hidden in data-updates/military.lua)
+local dummyLab = table.deepcopy(data.raw.lab["lab"])
+dummyLab.name = "dummy-lab"
+dummyLab.hidden = true
+--dummyLab.hidden_in_factoriopedia = true
+bobmods.lib.safe_insert(dummyLab.inputs, "space-science-pack")
+if data.raw.tool["sct-bio-science-pack"] then
+  bobmods.lib.safe_insert(dummyLab.inputs, "sct-bio-science-pack")
+end
+bobmods.lib.safe_insert(dummyLab.inputs, "automation-science-pack")
+bobmods.lib.safe_insert(dummyLab.inputs, "logistic-science-pack")
+bobmods.lib.safe_insert(dummyLab.inputs, "chemical-science-pack")
+bobmods.lib.safe_insert(dummyLab.inputs, "production-science-pack")
+bobmods.lib.safe_insert(dummyLab.inputs, "utility-science-pack")
+bobmods.lib.safe_insert(dummyLab.inputs, "military-science-pack")
+
+if mods["bobtech"] and mods["bobenemies"] then
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-science-pack-gold")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack-purple")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack-blue")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack-red")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack-green")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack-orange")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack-yellow")
+  bobmods.lib.safe_insert(dummyLab.inputs, "bob-alien-science-pack")
+  if bobmods.tech and bobmods.tech.advanced_logistic_science then
+    bobmods.lib.safe_insert(dummyLab.inputs, "bob-advanced-logistic-science-pack")
+  end
+end
+data:extend({dummyLab})

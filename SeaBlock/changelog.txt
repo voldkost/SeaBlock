@@ -1,4 +1,61 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.6.0
+Date: ??.??.??
+  Changes:
+    - Basegame 2.0 changes
+      - Added/Modified library functions to include better warnings/new 2.0 code
+      - Removed all references of normal/expensive recipes
+      - Crafting category "electronics" is no longer craftable by hand (see Fulgora changes) and must thus be readded to handcrafting
+      - Updated the mapgen to implement the new 2.0 mapgen functions
+      - Added "tile_condition" to landfill (2.0)
+      - Replaced old research trigger with new 2.0 trigger tech
+      - Added incompatibility condition with "space-age" and "quality" for SeaBlockMetaPack
+    - BobsMods 2.0 changes
+      - Reimplemented "item-group": "bob-gems" since it is quite fitting in SB
+      - bobwarfare 2.0 now includes "coal" in "firearm-magazine" which is unobtainable so this change is reverted
+      - bobplates 2.0 uses "steel-plate"/"iron-plate" instead of "plastic-bar" in batteries, this change is reverted
+      - "bob-alien-x-alloy" is hidden in SB and must be removed from the equipment recipes
+      - "bob-rocket-engine" is no longer needed
+    - AngelsMods 2.0 changes
+      - The ore amount for tin and lead were changed in 2.0, this was reverted
+    - SpaceMod 2.0 changes
+      - None of the listed recipes took one of the listed upgrades or were already applied
+      - Because of the changes of bobmodules and circuitprocessing the tech prerequisites changed as well
+    - Miscellaneous 2.0 changes
+      - control.lua cleanup
+      - data-final-fixes.lua cleanup
+      - SCT 2.0 has replaced "automation-science-pack" with "sct-automation-science-pack"
+      - Added "shotgun" recipe if "blueprint-shotgun" is enabled
+      - Changed the volume of the "wind-turbine-2" as it is way too loud
+---------------------------------------------------------------------------------------------------
+Version: 0.5.17
+Date: ??.??.??
+  Changes:
+    - Petrochem Cleanup #207
+      - Changed Blue Algae Liquefaction recipe to produce Crude Oil instead of Multi-phase Oil
+      - Change Cellulose Paste recipe to use Chlorine Gas instead of Chloromethane Gas
+      - Hid Multi-phase Oil and Chloromethane Gas
+      - Hid techs Gas Processing, Oil and Gas Extraction, Sulfur Processing 4, Chlorine Processing 3, and Chlorine Processing 4
+      - Hid Oil & Gas Separator and Advanced Gas Refinery
+    - Added custom Better Victory Screen statistics #323
+    - Handle Ore Sorting Facility 5 changes #327
+      - Stop creating recipe, item, and entity in Sea Block
+      - Added migration of removed Sea Block item and entity to new Angel's item and entity
+    - Metal Catalyst Recipes Review #333
+      - Changed recipes for making metal catalysts (removed red and added purple)
+      - Spread catalyst recipes more evenly out in the tech tree
+      - Changed catalyst recipes to use the appropriate catalyst for their tech tier
+    - Remove underused items/fluids #334
+      - Hid crushed stone. Use stone instead. Ratios will all stay the same
+      - Hid liquid fuel. Enriched fuel is now made directly from fuel oil plus residual gas
+      - Hid Electrowinning cells. Moved their recipes to Electrolyser 4
+      - Hid Desert / Swamp / Temperate environment kits
+    - Changed recipe icon for Slag 1 and Slag 2 #335
+    - Buffed the output of recipe Carbon 2 #336
+  Bugfixes:
+    - Fixed tech steam-power missing a locale in some mod configurations #332
+    - Fixed missing starting items in multiplayer games when Companion Drones mod is enabled #337
+---------------------------------------------------------------------------------------------------
 Version: 0.5.16
 Date: 27.02.2024
   Changes:

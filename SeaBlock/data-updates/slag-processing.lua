@@ -1,211 +1,159 @@
 -- Decrease amount of crushed stone for slag-slurry so it's still better than mineralized water crystallization
-seablock.lib.substingredient("stone-crushed-dissolution", "stone-crushed", nil, 20)
+seablock.lib.substingredient("angels-stone-crushed-dissolution", "angels-stone-crushed", "stone", 20)
 
--- Angels sludge crystalization usually gives normal smeltable ores. This would be far too easy,
--- so change recipes to give the weird ores that need extra processing steps.
+-- Angels sludge crystalization usually gives multiple ores. Change so we have one recipe per ore.
 for i = 1, 6 do
-  local recipe = data.raw.recipe["slag-processing-" .. i]
+  local recipe = data.raw.recipe["angels-slag-processing-" .. i]
   seablock.lib.copy_icon(recipe, {})
-  recipe.localised_name = { "recipe-name.slag-processing", { "item-name.angels-ore" .. i } }
+  recipe.localised_name = { "recipe-name.angels-slag-processing", { "item-name.angels-ore" .. i } }
   recipe.order = "a-a [angels-ore-" .. i .. "]"
 
-  recipe.ingredients = nil
-  recipe.results = nil
-  recipe.energy_required = nil
-  recipe.category = "crystallizing"
-
-  recipe.normal = {
-    energy_required = 4,
-    ingredients = { { type = "fluid", name = "mineral-sludge", amount = 25 } },
-    results = { { type = "item", name = "angels-ore" .. i, amount = 1 } },
-    enabled = false,
-  }
-
-  recipe.expensive = {
-    energy_required = 8,
-    ingredients = { { type = "fluid", name = "mineral-sludge", amount = 50 } },
-    results = { { type = "item", name = "angels-ore" .. i, amount = 1 } },
-    enabled = false,
-  }
+  recipe.category = "angels-crystallizing"
+  recipe.energy_required = 4
+  recipe.ingredients = { { type = "fluid", name = "angels-mineral-sludge", amount = 25 } }
+  recipe.results = { { type = "item", name = "angels-ore" .. i, amount = 1 } }
+  recipe.hidden = false
 end
 
 -- Angels ores 1, 3 (Saphirite, Stiratite) available from tutorial tech 1,
 -- Angels ores 5, 6 (Rubyte, Bobmonium) available from Slag processing 1
 -- Angels ores 2, 4 (Jivolite, Crotinnium) available from Advanced mechanical refining
-bobmods.lib.recipe.enabled("angelsore1-crushed-smelting", false)
-bobmods.lib.recipe.enabled("angelsore3-crushed-smelting", false)
-seablock.lib.moveeffect("catalysator-brown", "slag-processing-1", "advanced-ore-refining-1", 3)
-local slag1start = seablock.lib.findeffectidx(data.raw.technology["slag-processing-1"].effects, "slag-processing-1")
-seablock.lib.moveeffect("slag-processing-5", "slag-processing-2", "slag-processing-1", slag1start + 3)
-seablock.lib.moveeffect("slag-processing-6", "slag-processing-2", "slag-processing-1", slag1start + 4)
+bobmods.lib.recipe.enabled("iron-plate", false)
+bobmods.lib.recipe.enabled("copper-plate", false)
+seablock.lib.moveeffect("angels-catalysator-brown", "angels-slag-processing-1", "angels-advanced-ore-refining-1", 3)
+local slag1start =
+  seablock.lib.findeffectidx(data.raw.technology["angels-slag-processing-1"].effects, "angels-slag-processing-1")
+seablock.lib.insert_effect("angels-slag-processing-5", "angels-slag-processing-1", slag1start + 3)
+seablock.lib.insert_effect("angels-slag-processing-6", "angels-slag-processing-1", slag1start + 4)
 
 local slag2start = 0
-seablock.lib.moveeffect("slag-processing-2", "slag-processing-1", "ore-advanced-crushing", slag2start + 1)
-seablock.lib.moveeffect("slag-processing-4", "slag-processing-2", "ore-advanced-crushing", slag2start + 2)
-seablock.lib.moveeffect("angelsore2-crushed", "ore-crushing", "ore-advanced-crushing", slag2start + 3)
-seablock.lib.moveeffect("angelsore4-crushed", "ore-crushing", "ore-advanced-crushing", slag2start + 4)
+seablock.lib.moveeffect(
+  "angels-slag-processing-2",
+  "angels-slag-processing-1",
+  "angels-ore-advanced-crushing",
+  slag2start + 1
+)
+seablock.lib.insert_effect("angels-slag-processing-4", "angels-ore-advanced-crushing", slag2start + 2)
+seablock.lib.moveeffect("angels-ore2-crushed", "angels-ore-crushing", "angels-ore-advanced-crushing", slag2start + 3)
+seablock.lib.moveeffect("angels-ore4-crushed", "angels-ore-crushing", "angels-ore-advanced-crushing", slag2start + 4)
 
-seablock.lib.add_recipe_unlock("ore-crushing", "angelsore5-crushed", 3)
-seablock.lib.add_recipe_unlock("ore-crushing", "angelsore6-crushed", 4)
-seablock.lib.add_recipe_unlock("ore-crushing", "iron-plate")
-seablock.lib.add_recipe_unlock("ore-crushing", "copper-plate")
-seablock.lib.add_recipe_unlock("ore-crushing", "lead-plate")
-seablock.lib.add_recipe_unlock("ore-crushing", "tin-plate")
-seablock.lib.add_recipe_unlock("ore-crushing", "quartz-glass")
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "angels-ore5-crushed", 3)
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "angels-ore6-crushed", 4)
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "iron-plate")
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "copper-plate")
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "bob-lead-plate")
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "bob-tin-plate")
+seablock.lib.add_recipe_unlock("angels-ore-crushing", "bob-glass")
 
 seablock.lib.unhide_recipe("iron-plate")
 seablock.lib.unhide_recipe("copper-plate")
-seablock.lib.unhide_recipe("lead-plate")
-seablock.lib.unhide_recipe("tin-plate")
+seablock.lib.unhide_recipe("bob-lead-plate")
+seablock.lib.unhide_recipe("bob-tin-plate")
 
 -- Hide unwanted recipes
-bobmods.lib.recipe.hide("silver-plate")
-bobmods.lib.tech.remove_recipe_unlock("ore-crushing", "angelsore2-crushed-processing")
-bobmods.lib.tech.remove_recipe_unlock("ore-crushing", "angelsore4-crushed-processing")
-bobmods.lib.recipe.hide("angelsore2-crushed-processing")
-bobmods.lib.recipe.hide("angelsore4-crushed-processing")
-bobmods.lib.recipe.hide("angelsore5-crushed-smelting")
-bobmods.lib.recipe.hide("angelsore6-crushed-smelting")
+bobmods.lib.recipe.hide("bob-silver-plate")
+bobmods.lib.tech.remove_recipe_unlock("angels-ore-crushing", "angels-ore2-crushed-processing")
+bobmods.lib.tech.remove_recipe_unlock("angels-ore-crushing", "angels-ore4-crushed-processing")
+bobmods.lib.recipe.hide("angels-ore2-crushed-processing")
+bobmods.lib.recipe.hide("angels-ore4-crushed-processing")
+bobmods.lib.recipe.hide("angels-ore5-crushed-smelting")
+bobmods.lib.recipe.hide("angels-ore6-crushed-smelting")
 
 -- Add prerequisites
-bobmods.lib.tech.add_prerequisite("ore-floatation", "ore-advanced-crushing")
-bobmods.lib.tech.add_prerequisite("advanced-ore-refining-1", "ore-advanced-crushing")
+bobmods.lib.tech.add_prerequisite("angels-ore-floatation", "angels-ore-advanced-crushing")
+bobmods.lib.tech.add_prerequisite("angels-advanced-ore-refining-1", "angels-ore-advanced-crushing")
 
 -- Move Mechanical Refining under Slag Processing 1
-seablock.lib.moveeffect("ore-crusher", "ore-crushing", "automation")
-bobmods.lib.tech.remove_prerequisite("slag-processing-1", "ore-crushing")
-bobmods.lib.tech.remove_prerequisite("slag-processing-1", "logistic-science-pack")
-bobmods.lib.tech.remove_prerequisite("ore-crushing", "basic-chemistry")
-bobmods.lib.tech.add_prerequisite("ore-crushing", "slag-processing-1")
+seablock.lib.moveeffect("angels-ore-crusher", "angels-ore-crushing", "automation")
+bobmods.lib.tech.remove_prerequisite("angels-slag-processing-1", "angels-ore-crushing")
+bobmods.lib.tech.remove_prerequisite("angels-slag-processing-1", "logistic-science-pack")
+bobmods.lib.tech.remove_prerequisite("angels-ore-crushing", "angels-basic-chemistry")
+bobmods.lib.tech.add_prerequisite("angels-ore-crushing", "angels-slag-processing-1")
 
 -- Move crystallization ore recipes up above crushed ores
-data.raw["item-subgroup"]["slag-processing-1"].order = "ab"
+data.raw["item-subgroup"]["angels-slag-processing-1"].order = "ab"
 
 -- Red science level research for slag processing 1
-data.raw.technology["slag-processing-1"].unit = {
+data.raw.technology["angels-slag-processing-1"].unit = {
   count = 20,
   ingredients = { { "automation-science-pack", 1 } },
   time = 15,
 }
 
-if data.raw["assembling-machine"]["ore-sorting-facility-4"] then
-  data.raw["assembling-machine"]["ore-sorting-facility-4"].next_upgrade = "sb-ore-sorting-facility-5"
-end
-
-bobmods.lib.tech.add_prerequisite("advanced-ore-refining-2", "ore-powderizer")
-bobmods.lib.tech.add_prerequisite("advanced-ore-refining-2", "advanced-electronics")
-bobmods.lib.tech.add_prerequisite("advanced-ore-refining-4", "advanced-electronics-3")
-bobmods.lib.tech.add_prerequisite("advanced-ore-refining-4", "angels-tungsten-smelting-1")
-seablock.lib.add_recipe_unlock("advanced-ore-refining-4", "sb-ore-sorting-facility-5", 3)
-
-local buildingmulti = angelsmods.marathon.buildingmulti
-local buildingtime = angelsmods.marathon.buildingtime
-
-angelsmods.functions.RB.build({
-  {
-    type = "recipe",
-    name = "sb-ore-sorting-facility-5",
-    normal = {
-      energy_required = 5,
-      enabled = false,
-      ingredients = {
-        { type = "item", name = "ore-sorting-facility-4", amount = 1 },
-        { type = "item", name = "t5-plate", amount = 12 },
-        { type = "item", name = "t5-circuit", amount = 12 },
-        { type = "item", name = "t5-brick", amount = 12 },
-        { type = "item", name = "t5-gears", amount = 8 },
-      },
-      result = "sb-ore-sorting-facility-5",
-    },
-    expensive = {
-      energy_required = 5 * buildingtime,
-      enabled = false,
-      ingredients = {
-        { type = "item", name = "ore-sorting-facility-4", amount = 1 },
-        { type = "item", name = "t5-plate", amount = 12 * buildingmulti },
-        { type = "item", name = "t5-circuit", amount = 12 * buildingmulti },
-        { type = "item", name = "t5-brick", amount = 12 * buildingmulti },
-        { type = "item", name = "t5-gears", amount = 8 * buildingmulti },
-      },
-      result = "sb-ore-sorting-facility-5",
-    },
-  },
-})
-
--- Make ore sorting recipes require a higher tier ore sorting facility
-for _, v in pairs({
-  "angelsore1-chunk-processing",
-  "angelsore2-chunk-processing",
-  "angelsore3-chunk-processing",
-  "angelsore4-chunk-processing",
-  "angelsore5-chunk-processing",
-  "angelsore6-chunk-processing",
-}) do
-  bobmods.lib.recipe.set_category(v, "ore-sorting-2")
-end
-bobmods.lib.tech.add_prerequisite("ore-floatation", "advanced-ore-refining-1")
-
-for _, v in pairs({
-  "angelsore1-crystal-processing",
-  "angelsore2-crystal-processing",
-  "angelsore3-crystal-processing",
-  "angelsore4-crystal-processing",
-  "angelsore5-crystal-processing",
-  "angelsore6-crystal-processing",
-}) do
-  bobmods.lib.recipe.set_category(v, "ore-sorting-3")
-end
-bobmods.lib.tech.add_prerequisite("ore-leaching", "advanced-ore-refining-2")
-
-for _, v in pairs({
-  "angelsore1-pure-processing",
-  "angelsore2-pure-processing",
-  "angelsore3-pure-processing",
-  "angelsore4-pure-processing",
-  "angelsore5-pure-processing",
-  "angelsore6-pure-processing",
-}) do
-  bobmods.lib.recipe.set_category(v, "ore-sorting-4")
-end
-bobmods.lib.tech.add_prerequisite("ore-refining", "advanced-ore-refining-3")
-
-for _, v in pairs({
-  "angelsore-pure-mix1-processing",
-  "angelsore-pure-mix2-processing",
-}) do
-  bobmods.lib.recipe.set_category(v, "ore-sorting-5")
-end
-
--- Slow down Ore Sorting Facilities to make space for our new top tier
-data.raw["assembling-machine"]["ore-sorting-facility"].crafting_speed = 0.5
-data.raw["assembling-machine"]["ore-sorting-facility-2"].crafting_speed = 0.75
-data.raw["assembling-machine"]["ore-sorting-facility-3"].crafting_speed = 1.0
-data.raw["assembling-machine"]["ore-sorting-facility-4"].crafting_speed = 1.5
+bobmods.lib.tech.add_prerequisite("angels-advanced-ore-refining-2", "angels-ore-powderizer")
+bobmods.lib.tech.add_prerequisite("angels-advanced-ore-refining-2", "advanced-circuit")
+bobmods.lib.tech.add_prerequisite("angels-advanced-ore-refining-4", "bob-advanced-processing-unit")
+bobmods.lib.tech.add_prerequisite("angels-advanced-ore-refining-4", "angels-tungsten-smelting-1")
 
 -- Add an additional slag to the mixed sorting recipes
 for _, v in pairs({
   -- Saphirite
-  "angelsore1-crushed-processing",
-  "angelsore1-chunk-processing",
-  "angelsore1-crystal-processing",
+  "angels-ore1-crushed-processing",
+  "angels-ore1-chunk-processing",
+  "angels-ore1-crystal-processing",
   -- Jivolite
-  "angelsore2-chunk-processing",
-  "angelsore2-crystal-processing",
+  "angels-ore2-chunk-processing",
+  "angels-ore2-crystal-processing",
   -- Stiratite
-  "angelsore3-crushed-processing",
-  "angelsore3-chunk-processing",
-  "angelsore3-crystal-processing",
+  "angels-ore3-crushed-processing",
+  "angels-ore3-chunk-processing",
+  "angels-ore3-crystal-processing",
   -- Crotinnium
-  "angelsore4-chunk-processing",
-  "angelsore4-crystal-processing",
+  "angels-ore4-chunk-processing",
+  "angels-ore4-crystal-processing",
   -- Rubyte
-  "angelsore5-crushed-processing",
-  "angelsore5-chunk-processing",
-  "angelsore5-crystal-processing",
+  "angels-ore5-crushed-processing",
+  "angels-ore5-chunk-processing",
+  "angels-ore5-crystal-processing",
   -- Bobmonium
-  "angelsore6-crushed-processing",
-  "angelsore6-chunk-processing",
-  "angelsore6-crystal-processing",
+  "angels-ore6-crushed-processing",
+  "angels-ore6-chunk-processing",
+  "angels-ore6-crystal-processing",
 }) do
-  seablock.lib.substresult(v, "slag", nil, 2)
+  seablock.lib.substresult(v, "angels-slag", nil, 2)
 end
+
+-- Change the recipe icon for Dirt water electrolysis to show slag icon
+data.raw.recipe["angels-dirt-water-separation"].icons = angelsmods.functions.add_number_icon_layer(
+  angelsmods.functions.get_object_icons("angels-slag"),
+  1,
+  angelsmods.petrochem.number_tint
+)
+data.raw.recipe["angels-dirt-water-separation-2"].icons = angelsmods.functions.add_number_icon_layer(
+  angelsmods.functions.get_object_icons("angels-slag"),
+  2,
+  angelsmods.petrochem.number_tint
+)
+
+-- Move Ferrous & Cupric concentrate anodizing recipes from Electrowinning cell to Electrolyser 4
+table.insert(data.raw["assembling-machine"]["angels-electrolyser-4"].crafting_categories, "sb-petrochem-electrolyser-4")
+bobmods.lib.recipe.set_category("angels-ore8-anode-sludge", "sb-petrochem-electrolyser-4")
+bobmods.lib.recipe.set_category("angels-ore9-anode-sludge", "sb-petrochem-electrolyser-4")
+bobmods.lib.tech.add_prerequisite("angels-ore-electro-whinning-cell", "angels-advanced-chemistry-3")
+
+-- This was changed by Angelsmods in 2.0
+local OV = angelsmods.functions.OV
+OV.patch_recipes({
+  {
+    name = "bob-tin-plate",
+    ingredients = {
+      { name = "bob-tin-ore", type = "item", amount = "+3" },
+    },
+    results = {
+      { name = "bob-tin-plate", type = "item", amount = "+2" },
+    },
+    localised_name = { "item-name.bob-tin-plate" },
+    subgroup = "angels-tin-casting"
+  },
+  {
+    name = "bob-lead-plate",
+    ingredients = {
+      { name = "bob-lead-ore", type = "item", amount = "+3" },
+    },
+    results = {
+      { name = "bob-lead-plate", type = "item", amount = "+2" },
+    },
+    localised_name = { "item-name.bob-lead-plate" },
+    subgroup = "angels-lead-casting"
+  }
+})

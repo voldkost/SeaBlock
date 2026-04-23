@@ -14,14 +14,17 @@ local function makeextractorlayers(bottom, top)
   local layers = {}
   if top then
     table.insert(layers, {
-      stripes = makestripes("__angelsrefining__/graphics/entity/thermal-extractor/thermal-extractor-base.png", 16),
+      stripes = makestripes(
+        "__angelsrefininggraphics__/graphics/entity/thermal-extractor/thermal-extractor-base.png",
+        16
+      ),
       priority = "high",
       width = 288,
       height = 288,
       shift = { 0, 0 },
       frame_count = 16,
       x = 288 * 2,
-      animation_speed = 0.5,
+      animation_speed = 1,
     })
   end
   table.insert(layers, {
@@ -30,28 +33,31 @@ local function makeextractorlayers(bottom, top)
     height = 288,
     line_length = 4,
     shift = { 0, 0 },
-    filename = "__angelsrefining__/graphics/entity/thermal-extractor/thermal-extractor-animation.png",
+    filename = "__angelsrefininggraphics__/graphics/entity/thermal-extractor/thermal-extractor-animation.png",
     frame_count = 16,
-    animation_speed = 0.5,
+    animation_speed = 1,
   })
   if bottom then
     table.insert(layers, {
-      stripes = makestripes("__angelsrefining__/graphics/entity/thermal-extractor/thermal-extractor-base.png", 16),
+      stripes = makestripes(
+        "__angelsrefininggraphics__/graphics/entity/thermal-extractor/thermal-extractor-base.png",
+        16
+      ),
       priority = "high",
       width = 288,
       height = 288,
       shift = { 0, 0 },
       frame_count = 16,
       x = 0,
-      animation_speed = 0.5,
+      animation_speed = 1,
     })
   end
   return { layers = layers }
 end
 
-local extractor = data.raw["mining-drill"]["thermal-extractor"]
-data.raw["mining-drill"]["thermal-extractor"] = nil
-data.raw["assembling-machine"]["thermal-extractor"] = extractor
+local extractor = data.raw["mining-drill"]["angels-thermal-extractor"]
+data.raw["mining-drill"]["angels-thermal-extractor"] = nil
+data.raw["assembling-machine"]["angels-thermal-extractor"] = extractor
 extractor.type = "assembling-machine"
 extractor.crafting_speed = 1
 extractor.ingredient_count = 2
@@ -59,33 +65,36 @@ extractor.fluid_boxes = {
   {
     production_type = "input",
     base_area = 10,
-    base_level = -1,
+    --base_level = -1,
+    volume = 1000,
     pipe_covers = pipecoverspictures(),
-    pipe_connections = { { type = "input", position = { 5, 3 } } },
+    pipe_connections = { { flow_direction = "input", position = { 3, - 4 }, direction = defines.direction.north } },
   },
   {
     production_type = "output",
     base_area = 10,
-    base_level = 1,
+    --base_level = 1,
+    volume = 1000,
     pipe_covers = pipecoverspictures(),
-    pipe_connections = { { type = "output", position = { -5, -3 } } },
+    pipe_connections = { { flow_direction = "output", position = { -3, 4 }, direction = defines.direction.south } },
   },
 }
-extractor.animation = {
-  north = makeextractorlayers(false, false),
-  east = makeextractorlayers(true, true),
-  south = makeextractorlayers(false, false),
-  west = makeextractorlayers(true, true),
+extractor.graphics_set.animation = {
+  north = makeextractorlayers(true, true),
+  east = makeextractorlayers(false, false),
+  south = makeextractorlayers(true, true),
+  west = makeextractorlayers(false, false),
 }
-extractor.crafting_categories = { "thermal-extractor" }
-extractor.fixed_recipe = "thermal-extractor-water"
-bobmods.lib.tech.add_recipe_unlock("thermal-water-extraction-2", "thermal-extractor-water")
-move_item("thermal-extractor", "water-treatment-building", "f[thermal-extractor]-b[extractor]", "item")
-bobmods.lib.recipe.add_ingredient("thermal-extractor", { "thermal-bore", 1 })
+extractor.crafting_categories = { "sb-thermal-extractor" }
+extractor.fixed_recipe = "sb-thermal-extractor-water"
+bobmods.lib.tech.add_recipe_unlock("angels-thermal-water-extraction-2", "sb-thermal-extractor-water")
+move_item("angels-thermal-extractor", "angels-water-treatment-building", "f[thermal-extractor]-b[extractor]", "item")
+bobmods.lib.recipe.add_ingredient("angels-thermal-extractor", { type = "item", name = "angels-thermal-bore", amount = 1 })
+extractor.vector_to_place_result = nil -- remove the yellow arrow of the mining drill
 
-local bore = data.raw["mining-drill"]["thermal-bore"]
-data.raw["mining-drill"]["thermal-bore"] = nil
-data.raw["assembling-machine"]["thermal-bore"] = bore
+local bore = data.raw["mining-drill"]["angels-thermal-bore"]
+data.raw["mining-drill"]["angels-thermal-bore"] = nil
+data.raw["assembling-machine"]["angels-thermal-bore"] = bore
 bore.type = "assembling-machine"
 bore.crafting_speed = 1
 bore.ingredient_count = 1
@@ -93,53 +102,55 @@ bore.fluid_boxes = {
   {
     production_type = "output",
     base_area = 1,
-    base_level = 1,
-    pipe_covers = pipecoverspictures(),
-    pipe_connections = {
-      {
-        type = "output",
-        positions = { { 1, -2 }, { 2, -1 }, { -1, 2 }, { -2, 1 } },
-      },
-    },
+    volume = 500,
+    pipe_covers = bore.output_fluid_box.pipe_covers,
+    pipe_connections = bore.output_fluid_box.pipe_connections
   },
 }
+bore.vector_to_place_result = nil
 
-local function makesheet(sheet, count, d)
-  local r = table.deepcopy(sheet)
-  r.stripes = makestripes(r.filename, count)
-  r.frame_count = count
-  r.filename = nil
-  r.x = r.width * d
-  if r.hr_version then
-    r.hr_version = makesheet(r.hr_version, count, d)
-  end
-  return r
-end
-local function makeborelayers(d)
-  return {
+-- This is needed for the animation below
+bore.base_picture.sheet.line_length = 1
+bore.base_picture.sheet.repeat_count = 16
+
+-- Edit animation to include output pipe facing north and south
+local working_animation = table.deepcopy(bore.graphics_set.animation.north)
+
+--- This animation is a translation of the mining_drill but for an assembling_machine
+--- This is done because an assembling_machine has no base_picture so the northern and southern pipe extentions have to be added via animation
+bore.graphics_set.animation = {
+  north = {
     layers = {
-      makesheet(bore.base_picture.sheets[1], bore.animations.north.layers[1].frame_count, d),
-      makesheet(bore.base_picture.sheets[2], bore.animations.north.layers[1].frame_count, d),
-      bore.animations.north.layers[1],
-      bore.animations.north.layers[2],
-    },
-  }
-end
-bore.animation = {
-  north = makeborelayers(0),
-  east = makeborelayers(1),
-  south = makeborelayers(2),
-  west = makeborelayers(3),
+      table.deepcopy(bore.base_picture.sheet),
+      working_animation
+    }
+  },
+  east = working_animation,
+  south = {
+    layers = {
+      table.deepcopy(bore.base_picture.sheet),
+      working_animation
+    }
+  },
+  west = working_animation,
 }
-bore.crafting_categories = { "thermal-bore" }
-bore.fixed_recipe = "thermal-bore-water"
-bobmods.lib.tech.add_recipe_unlock("thermal-water-extraction", "thermal-bore-water")
-move_item("thermal-bore", "water-treatment-building", "f[thermal-extractor]-a[bore]", "item")
+
+-- Shift animation to make other pipe visible 
+bore.graphics_set.animation.south.layers[1].x = 576
+
+-- Reset animation speed for directions without additional layers
+bore.graphics_set.animation.east.animation_speed = 1
+bore.graphics_set.animation.west.animation_speed = 1
+
+bore.crafting_categories = { "sb-thermal-bore" }
+bore.fixed_recipe = "sb-thermal-bore-water"
+bobmods.lib.tech.add_recipe_unlock("angels-thermal-water-extraction", "sb-thermal-bore-water")
+move_item("angels-thermal-bore", "angels-water-treatment-building", "f[thermal-extractor]-a[bore]", "item")
 
 -- Fish Pressing requires thermal water so add a prerequisite
-if data.raw.technology["bio-pressing-fish"] then
-  bobmods.lib.tech.add_prerequisite("bio-pressing-fish", "thermal-water-extraction")
+if data.raw.technology["angels-bio-pressing-fish"] then
+  bobmods.lib.tech.add_prerequisite("angels-bio-pressing-fish", "angels-thermal-water-extraction")
 else
-  bobmods.lib.tech.add_prerequisite("bio-pressing-fish-1", "thermal-water-extraction")
+  bobmods.lib.tech.add_prerequisite("angels-bio-pressing-fish-1", "angels-thermal-water-extraction")
 end
-bobmods.lib.tech.add_prerequisite("thermal-water-extraction", "bio-processing-brown")
+bobmods.lib.tech.add_prerequisite("angels-thermal-water-extraction", "angels-bio-processing-brown")

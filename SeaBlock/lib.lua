@@ -2,6 +2,35 @@ seablock = seablock or {}
 seablock.lib = {}
 seablock.reskins = {}
 
+---Sets a tile restriction on any specified prototype
+---does not replace existing autoplace dict but creates if it doesnt exist
+---@param ptype string "tile", "entity", ...
+---@param name string name of prototype
+---@param restriction string|table string for singular restrict, table for multiple restrictions
+function seablock.lib.set_tile_restriction(ptype, name, restriction)
+    if (not data.raw[ptype]) then error ("Tried to set tile restriction on "..ptype.." "..name..": type does not exist") end
+    if (not data.raw[ptype][name]) then error("Tried to set tile restriction on "..ptype.." "..name..": "..name.." does not exist") end
+
+    data.raw[ptype][name].autoplace = data.raw[ptype][name].autoplace or {}
+
+    if (type(restriction) == "string") then restriction = { restriction } end
+
+    data.raw[ptype][name].autoplace["tile_restriction"] = restriction
+end
+
+---Sets a probability expression on any specified prototype
+---does not replace existing autoplace dict but creates if it doesnt exist
+---@param ptype string "tile", "entity", ...
+---@param name string name of prototype
+---@param expression string expression
+function seablock.lib.set_probability_expression(ptype, name, expression)
+    if (not data.raw[ptype]) then error ("Tried to set probability expression on "..ptype.." "..name..": type does not exist") end
+    if (not data.raw[ptype][name]) then error("Tried to set probability expression on "..ptype.." "..name..": "..name.." does not exist") end
+
+    data.raw[ptype][name].autoplace = data.raw[ptype][name].autoplace or {}
+    data.raw[ptype][name].autoplace["probability_expression"] = expression
+end
+
 function seablock.lib.findname(t, name)
   for i, v in ipairs(t) do
     if v.name == name then
@@ -21,6 +50,8 @@ end
 
 function seablock.lib.takeeffect(tech, name)
   if not data.raw.technology[tech] then
+    log("Warning: seablock.lib.takeeffect - can't find technology : " .. tech)
+    log(debug.traceback())
     return nil
   end
   local effects = data.raw.technology[tech].effects or {}
@@ -39,10 +70,29 @@ function seablock.lib.findeffectidx(effects, name)
   end
 end
 
+---Inserts recipe into tech at index
+---@param recipe_name string
+---@param tech_name string
+---@param index integer
+function seablock.lib.insert_effect(recipe_name, tech_name, index)
+  local tech = data.raw.technology[tech_name]
+
+  if not tech then
+    return
+  end
+
+  if index then
+    table.insert(tech.effects, index, { type = "unlock-recipe", recipe = recipe_name })
+  else
+    table.insert(tech.effects, { type = "unlock-recipe", recipe = recipe_name })
+  end
+end
+
 function seablock.lib.moveeffect(name, fromtech, totech, insertindex)
   local effect = seablock.lib.takeeffect(fromtech, name)
   if not effect then
-    log("Effect " .. name .. " not found in tech " .. fromtech)
+    log("Warning : seablock.lib.moveeffect - Effect " .. name .. " not found in tech " .. fromtech)
+    log(debug.traceback())
     return
   end
   if insertindex then
@@ -80,13 +130,6 @@ function seablock.lib.add_recipe_unlock(technology, recipe, insertindex)
     and data.raw.recipe[recipe]
   then
     add_recipe_unlock(data.raw.technology[technology], recipe, insertindex)
-
-    if data.raw.technology[technology].normal then
-      add_recipe_unlock(data.raw.technology[technology].normal, recipe, insertindex)
-    end
-    if data.raw.technology[technology].expensive then
-      add_recipe_unlock(data.raw.technology[technology].expensive, recipe, insertindex)
-    end
   else
     log(debug.traceback())
     bobmods.lib.error.technology(technology)
@@ -95,12 +138,6 @@ function seablock.lib.add_recipe_unlock(technology, recipe, insertindex)
 end
 
 function seablock.lib.iteraterecipes(recipe, func)
-  if recipe.normal then
-    func(recipe.normal)
-  end
-  if recipe.expensive then
-    func(recipe.expensive)
-  end
   if recipe.ingredients then
     func(recipe)
   end
@@ -126,59 +163,66 @@ function seablock.lib.recipeforeach(recipename, itemname, func, tablename)
 end
 
 function seablock.lib.substingredient(name, from, to, count)
-  local t = data.raw.recipe[name]
-  if t then
-    local dosubst = function(ingredient, nameidx, amountidx)
-      if to ~= nil then
-        ingredient[nameidx] = to
-      end
-      if count ~= nil then
-        ingredient[amountidx] = count
+  local recipe = data.raw.recipe[name]
+  if recipe then
+    for _, ingredient in pairs(recipe.ingredients) do
+      if ingredient.name == from then
+        if to ~= nil then
+          ingredient.name = to
+        end
+        if count ~= nil then
+          ingredient.amount = count
+        end
       end
     end
-    seablock.lib.recipeforeach(name, from, dosubst, "ingredients")
   else
+    log("Warning : seablock.lib.substingredient - can't find recipe : " .. name)
     log(debug.traceback())
   end
 end
 
 function seablock.lib.removeingredient(name, ingredient)
-  local t = data.raw.recipe[name]
-  if t then
-    local doremove = function(recipe)
-      for k, v in pairs(recipe.ingredients) do
-        if v[1] == ingredient or v.name == ingredient then
-          table.remove(recipe.ingredients, k)
-          return
-        end
+  local recipe = data.raw.recipe[name]
+  if recipe then
+    for k, v in pairs(recipe.ingredients) do
+      if v.name == ingredient then
+        table.remove(recipe.ingredients, k)
+        return
       end
     end
-    seablock.lib.iteraterecipes(t, doremove)
+  else
+    log("Warning : seablock.lib.removeingredient - can't find recipe : " .. name)
+    log(debug.traceback())
   end
 end
 
 function seablock.lib.substresult(name, from, to, count)
-  local t = data.raw.recipe[name]
-  if t then
-    local dosubst = function(result, nameidx, amountidx)
-      if to ~= nil then
-        result[nameidx] = to
-      end
-      if count ~= nil then
-        result[amountidx] = count
+  local recipe = data.raw.recipe[name]
+  if recipe then
+    for _, result in pairs(recipe.results) do
+      if result.name == from then
+        if to ~= nil then
+          result.name = to
+        end
+        if count ~= nil then
+          result.amount = count
+        end
       end
     end
-    seablock.lib.recipeforeach(name, from, dosubst, "results")
+  else
+    log("Warning : seablock.lib.substresult - can't find recipe : " .. name)
+    log(debug.traceback())
   end
 end
 
 function seablock.lib.addresult(name, resulttable)
-  local t = data.raw.recipe[name]
-  if t then
-    local doadd = function(recipe)
-      table.insert(recipe.results, resulttable)
-    end
-    seablock.lib.iteraterecipes(t, doadd)
+  local recipe = data.raw.recipe[name]
+  if recipe then
+    recipe.results = recipe.results or {}
+    table.insert(recipe.results, resulttable)
+  else
+    log("Warning: seablock.lib.addresult - can't find recipe : " .. name)
+    log(debug.traceback())
   end
 end
 
@@ -201,36 +245,36 @@ function seablock.lib.tablefind(table, item)
   return nil
 end
 
-function seablock.lib.unhide_recipe(recipe_name)
-  local recipe = data.raw.recipe[recipe_name]
-  if recipe then
-    if recipe.normal then
-      recipe.normal.hidden = false
-    end
-    if recipe.expensive then
-      recipe.expensive.hidden = false
-    end
-    if not recipe.normal and not recipe.expensive then
-      recipe.hidden = false
-    end
+function seablock.lib.unhide(type_name, name)
+  if not data.raw[type_name] then
+    log("Warning: seablock.lib.unhide - unknown type: " .. type_name)
+    log(debug.traceback())
+    return
   end
+
+  local item = data.raw[type_name][name]
+
+  if not item then
+    log("Warning: seablock.lib.unhide - unknown " .. type_name .. ": " .. name)
+    log(debug.traceback())
+    return
+  end
+
+  item.hidden = false
+end
+
+function seablock.lib.unhide_recipe(recipe_name)
+  seablock.lib.unhide("recipe", recipe_name)
 end
 
 function seablock.lib.hide_technology(technology_name)
   local technology = data.raw.technology[technology_name]
   if technology then
-    if technology.normal then
-      technology.normal.hidden = true
-      technology.normal.enabled = false
-    end
-    if technology.expensive then
-      technology.expensive.hidden = true
-      technology.expensive.enabled = false
-    end
-    if not technology.normal and not technology.expensive then
-      technology.hidden = true
-      technology.enabled = false
-    end
+    technology.hidden = true
+    technology.enabled = false
+  else
+    log("Warning: seablock.lib.hide_technology - Hide non existing tech : " .. technology_name)
+    log(debug.traceback())
   end
 end
 
@@ -243,42 +287,26 @@ function seablock.lib.copy_icon(to, from)
   end
 end
 
-function seablock.lib.hide_item(item_name)
-  local item = data.raw.item[item_name]
-  if item then
-    if not item.flags then
-      item.flags = {}
-    end
-    if not seablock.lib.tablefind(item.flags, "hidden") then
-      table.insert(item.flags, "hidden")
-    end
-  else
-    item = data.raw.fluid[item_name]
-    if item then
-      item.hidden = true
-    end
-  end
-end
-
 function seablock.lib.hide(type_name, name)
   if not data.raw[type_name] then
-    log("Unknown type: " .. type_name)
+    log("Warning: seablock.lib.hide - Unknown type: " .. type_name)
+    log(debug.traceback())
   else
     local item = data.raw[type_name][name]
     if not item then
-      log("Unknown " .. type_name .. ": " .. name)
+      log("Warning: seablock.lib.hide - Unknown " .. type_name .. ": " .. name)
+      log(debug.traceback())
     else
       if type_name == "fluid" then
         item.hidden = true
       else
-        if not item.flags then
-          item.flags = {}
-        end
-        if not seablock.lib.tablefind(item.flags, "hidden") then
-          table.insert(item.flags, "hidden")
-        end
+        item.hidden = true
 
         if type_name == "item" then
+          if not item.flags then
+            item.flags = {}
+          end
+          
           table.insert(item.flags, "hide-from-bonus-gui")
         end
 
@@ -288,10 +316,19 @@ function seablock.lib.hide(type_name, name)
   end
 end
 
+function seablock.lib.hide_item(item_name)
+  if data.raw.item[item_name] then
+    seablock.lib.hide("item", item_name)
+  else
+    seablock.lib.hide("fluid", item_name)
+  end
+end
+
 function seablock.lib.remove_effect(technology_name, effect_type, effect_key, effect_value)
   local tech = data.raw.technology[technology_name]
   if not tech then
-    log("Unknown technology: " .. technology_name)
+    log("Warning: seablock.lib.remove_effect - Unknown technology: " .. technology_name)
+    log(debug.traceback())
     return
   end
 
@@ -307,13 +344,15 @@ end
 
 function seablock.lib.add_flag(type, name, flag)
   if not data.raw[type] then
-    log("Unknown type: " .. type)
+    log("Warning : seablock.lib.add_flag - Unknown type: " .. type)
+    log(debug.traceback())
     return
   end
 
   local item = data.raw[type][name]
   if not item then
-    log("Unknown " .. type .. ": " .. name)
+    log("Warning : seablock.lib.add_flag - Unknown " .. type .. ": " .. name)
+    log(debug.traceback())
     return
   end
 
@@ -552,5 +591,57 @@ function seablock.reskins.clear_icon_specification(name, type)
     entity.icons = nil
     entity.icon_size = nil
     entity.icon_mipmaps = nil
+  end
+end
+
+---Adds a crafting category to an entity
+---@param type string assembling-machine, ...
+---@param entity_name string
+---@param category string
+function seablock.lib.add_category(type, entity_name, category)
+  if (not data.raw["recipe-category"][category]) then
+    log("Warning: seablock.lib.add_category - Category \""..category.."\" does not exist")
+    return
+  end
+
+  if (not data.raw[type]) then
+    log("Warning: seablock.lib.add_category - Type \""..type.."\" does not exist")
+    return
+  end
+
+  if (not data.raw[type][entity_name]) then
+    log("Warning: seablock.lib.add_category - Entity \""..entity_name.."\" does not exist")
+    return
+  end
+
+  data.raw[type][entity_name].crafting_categories = data.raw[type][entity_name].crafting_categories or {}
+
+  table.insert(data.raw[type][entity_name].crafting_categories, category)
+end
+
+--- Adds a crafting category to a recipe.
+--- If no category is set before it will be set to category_name.
+--- Otherwise it will be safely added to additional_categories.
+---@param recipe_name string
+---@param category_name string
+function seablock.lib.add_recipe_category(recipe_name, category_name)
+  local recipe = data.raw.recipe[recipe_name]
+
+  if (not recipe) then
+    log("Warning: seablock.lib.add_recipe_category - Recipe \""..recipe_name.."\" not found")
+    return
+  end
+
+  if (not data.raw["recipe-category"][category_name]) then
+    log("Warning: seablock.lib.add_recipe_category - Category \""..category_name.."\" does not exist")
+    return
+  end
+
+  if (not recipe.category) then
+    recipe.category = category_name
+  else
+    recipe.additional_categories = recipe.additional_categories or {}
+
+    table.insert(recipe.additional_categories, category_name)
   end
 end
